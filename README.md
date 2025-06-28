@@ -1,10 +1,10 @@
-# SolBooks 🚀
+# MerkleBooks 🚀
 
 **Professional Solana Accounting Software**
 
 A beautiful, production-ready accounting application built specifically for Solana blockchain transactions. Track, classify, and manage your crypto finances with enterprise-grade features and Apple-inspired design.
 
-![SolBooks Dashboard](./Screenshot.png)
+![MerkleBooks Dashboard](./Screenshot.png)
 
 ## ✨ Features
 
@@ -63,8 +63,8 @@ A beautiful, production-ready accounting application built specifically for Sola
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/pepeneif/SolBooks.git
-   cd SolBooks
+   git clone https://github.com/pepeneif/MerkleBooks.git
+   cd MerkleBooks
    ```
 
 2. **Install dependencies**
@@ -119,7 +119,7 @@ npm run preview
 
 ## 🎨 Themes
 
-SolBooks includes two beautiful themes:
+MerkleBooks includes two beautiful themes:
 
 - **🌞 Light Theme**: Clean, minimal design inspired by Apple's design language
 - **🌙 Dark Theme**: Elegant dark mode with warm orange accents
@@ -157,9 +157,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- **Documentation**: [Wiki](https://github.com/pepeneif/SolBooks/wiki)
-- **Issues**: [GitHub Issues](https://github.com/pepeneif/SolBooks/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/pepeneif/SolBooks/discussions)
+- **Documentation**: [Wiki](https://github.com/pepeneif/MerkleBooks/wiki)
+- **Issues**: [GitHub Issues](https://github.com/pepeneif/MerkleBooks/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/pepeneif/MerkleBooks/discussions)
 
 ## 🗺️ Roadmap
 
