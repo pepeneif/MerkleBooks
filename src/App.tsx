@@ -16,7 +16,7 @@ function AppContent() {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard onPageChange={setCurrentPage} />;
       case 'transactions':
         return (
           <div className="space-y-6">
@@ -42,7 +42,7 @@ function AppContent() {
       case 'categories':
         return <Categories />;
       default:
-        return <Dashboard />;
+        return <Dashboard onPageChange={setCurrentPage} />;
     }
   };
 

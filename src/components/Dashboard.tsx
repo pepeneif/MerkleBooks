@@ -1,27 +1,33 @@
 import React from 'react';
 import { WalletConnection } from './WalletConnection';
-import { TransactionList } from './TransactionList';
 import { TokenSelector } from './TokenSelector';
 import { useTransactions } from '../hooks/useTransactions';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw, Receipt } from 'lucide-react';
 import { formatTokenAmount } from '../utils/tokens';
 
-export function Dashboard() {
+interface DashboardProps {
+  onPageChange: (page: string) => void;
+}
+
+export function Dashboard({ onPageChange }: DashboardProps) {
   const { connected } = useWallet();
-  const { 
-    transactions, 
-    allTransactions, 
-    loading, 
-    classifyTransaction, 
+  const {
+    allTransactions,
+    loading,
     fetchAllTransactions,
     tokenFilter,
     setTokenFilter
   } = useTransactions();
 
   const stats = React.useMemo(() => {
+    // Filter transactions based on current filter settings (same logic as useTransactions hook)
+    const filteredTransactions = tokenFilter.enabled
+      ? allTransactions.filter(t => tokenFilter.selectedTokens.includes(t.token.mint))
+      : allTransactions;
+
     // Group transactions by token
-    const tokenStats = transactions.reduce((acc, t) => {
+    const tokenStats = filteredTransactions.reduce((acc, t) => {
       const tokenKey = t.token.symbol;
       if (!acc[tokenKey]) {
         acc[tokenKey] = { income: 0, expenses: 0, token: t.token };
@@ -36,11 +42,11 @@ export function Dashboard() {
       return acc;
     }, {} as Record<string, { income: number; expenses: number; token: any }>);
 
-    const unclassified = transactions.filter(t => !t.classified).length;
-    const totalTransactions = transactions.length;
+    const unclassified = allTransactions.filter(t => !t.classified).length;
+    const totalTransactions = filteredTransactions.length;
 
     return { tokenStats, unclassified, totalTransactions };
-  }, [transactions]);
+  }, [allTransactions, tokenFilter]);
 
   const handleRefresh = () => {
     fetchAllTransactions();
@@ -190,10 +196,37 @@ export function Dashboard() {
         </div>
       </div>
 
-      <TransactionList 
-        transactions={transactions} 
-        onClassifyTransaction={classifyTransaction}
-      />
+      {/* Transaction Management Summary */}
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300">
+        <div className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Transaction Management</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {stats.unclassified > 0
+                  ? `${stats.unclassified} transactions need classification`
+                  : 'All transactions are properly classified'
+                }
+              </p>
+            </div>
+            <button
+              onClick={() => onPageChange('transactions')}
+              className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <Receipt className="w-5 h-5" />
+              <span>Manage Transactions</span>
+            </button>
+          </div>
+          
+          {stats.unclassified > 0 && (
+            <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
+              <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                You have unclassified transactions that need attention for accurate accounting.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
