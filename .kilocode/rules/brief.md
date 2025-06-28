@@ -1,0 +1,1 @@
+This is an application to label and track Solana transactions for accounting and control of wallets, it tries to solve the shortcomings of Phantom Wallet and other solana wallets, where the user cannot add any labels to remember for what each transaction was made.
