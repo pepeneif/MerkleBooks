@@ -55,7 +55,7 @@ export function Categories() {
                   value={newCategory.name}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
-                  placeholder="e.g., Groceries"
+                  placeholder="e.g., Internet Hosting"
                   required
                 />
               </div>
@@ -70,7 +70,7 @@ export function Categories() {
                   onChange={handleInputChange}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
-                  placeholder="e.g., Weekly grocery shopping"
+                  placeholder="e.g., Server Hosting for the Appllication"
                 />
               </div>
               <div>
