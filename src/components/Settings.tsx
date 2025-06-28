@@ -463,7 +463,7 @@ export function Settings() {
                   <ul className="text-xs space-y-1 text-blue-600 dark:text-blue-400">
                     <li>• All values will be displayed in your selected currency</li>
                     <li>• Original token amounts shown in parentheses for reference</li>
-                    <li>• Exchange rates are updated automatically (mock rates in demo)</li>
+                    <li>• Exchange rates are updated automatically via Jupiter API</li>
                     <li>• Dashboard aggregation uses converted values for totals</li>
                   </ul>
                 </div>

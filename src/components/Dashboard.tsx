@@ -5,7 +5,7 @@ import { useTransactions } from '../hooks/useTransactions';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw, Receipt, PieChart } from 'lucide-react';
 import { formatTokenAmount } from '../utils/tokens';
-import { convertTokenToBaseCurrency, formatCurrencyAmount, formatTokenAmountWithCurrency } from '../utils/currency';
+import { convertTokenToBaseCurrencySync, formatCurrencyAmount, formatTokenAmountWithCurrency } from '../utils/currency';
 import { loadCurrencyPreference } from '../utils/storage';
 import { CurrencyPreference } from '../types';
 
@@ -61,8 +61,8 @@ export function Dashboard({ onPageChange }: DashboardProps) {
     let totalExpensesConverted = 0;
     
     Object.values(tokenStats).forEach(tokenData => {
-      totalIncomeConverted += convertTokenToBaseCurrency(tokenData.income, tokenData.token, currencyPreference);
-      totalExpensesConverted += convertTokenToBaseCurrency(tokenData.expenses, tokenData.token, currencyPreference);
+      totalIncomeConverted += convertTokenToBaseCurrencySync(tokenData.income, tokenData.token, currencyPreference);
+      totalExpensesConverted += convertTokenToBaseCurrencySync(tokenData.expenses, tokenData.token, currencyPreference);
     });
 
     const unclassified = allTransactions.filter(t => !t.classified).length;

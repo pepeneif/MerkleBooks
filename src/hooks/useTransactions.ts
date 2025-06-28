@@ -4,6 +4,7 @@ import { PublicKey, ParsedAccountData } from '@solana/web3.js';
 import { Transaction, TokenFilter } from '../types';
 import { saveTransactions, loadTransactions, loadWalletConfigs, loadAutoRefreshSetting } from '../utils/storage';
 import { SOL_TOKEN, getTokenByMint } from '../utils/tokens';
+import { getExchangeRates } from '../utils/currency';
 
 // Debounce utility function
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
@@ -57,6 +58,14 @@ export function useTransactions() {
     
     setLoading(true);
     try {
+      // Refresh exchange rates when fetching transactions
+      try {
+        await getExchangeRates();
+        console.log('Exchange rates refreshed from Jupiter API');
+      } catch (error) {
+        console.warn('Failed to refresh exchange rates:', error);
+      }
+      
       const walletConfigs = loadWalletConfigs();
       const walletsToFetch: Array<{address: string, name: string, isActive: boolean}> = [];
 

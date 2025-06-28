@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WalletContextProvider } from './contexts/WalletContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { Sidebar } from './components/Sidebar';
@@ -8,10 +8,25 @@ import { InvoiceManager } from './components/InvoiceManager';
 import { Settings } from './components/Settings';
 import { Categories } from './components/Categories';
 import { useTransactions } from './hooks/useTransactions';
+import { initializeExchangeRates } from './utils/currency';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const { transactions, classifyTransaction } = useTransactions();
+
+  // Initialize exchange rates on app startup
+  useEffect(() => {
+    const initRates = async () => {
+      try {
+        await initializeExchangeRates();
+        console.log('Exchange rates initialized from Jupiter API');
+      } catch (error) {
+        console.warn('Failed to initialize exchange rates on startup:', error);
+      }
+    };
+    
+    initRates();
+  }, []);
 
   const renderCurrentPage = () => {
     switch (currentPage) {
