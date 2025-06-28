@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { WalletConnection } from './WalletConnection';
 import { TokenSelector } from './TokenSelector';
 import { useTransactions } from '../hooks/useTransactions';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw, Receipt } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw, Receipt, PieChart } from 'lucide-react';
 import { formatTokenAmount } from '../utils/tokens';
+import { convertTokenToBaseCurrency, formatCurrencyAmount, formatTokenAmountWithCurrency } from '../utils/currency';
+import { loadCurrencyPreference } from '../utils/storage';
+import { CurrencyPreference } from '../types';
 
 interface DashboardProps {
   onPageChange: (page: string) => void;
@@ -12,6 +15,7 @@ interface DashboardProps {
 
 export function Dashboard({ onPageChange }: DashboardProps) {
   const { connected } = useWallet();
+  const [currencyPreference, setCurrencyPreference] = useState<CurrencyPreference>(() => loadCurrencyPreference());
   const {
     allTransactions,
     loading,
@@ -19,6 +23,16 @@ export function Dashboard({ onPageChange }: DashboardProps) {
     tokenFilter,
     setTokenFilter
   } = useTransactions();
+
+  // Listen for currency preference changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setCurrencyPreference(loadCurrencyPreference());
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const stats = React.useMemo(() => {
     // Filter transactions based on current filter settings (same logic as useTransactions hook)
@@ -42,11 +56,27 @@ export function Dashboard({ onPageChange }: DashboardProps) {
       return acc;
     }, {} as Record<string, { income: number; expenses: number; token: any }>);
 
+    // Calculate aggregated stats in base currency
+    let totalIncomeConverted = 0;
+    let totalExpensesConverted = 0;
+    
+    Object.values(tokenStats).forEach(tokenData => {
+      totalIncomeConverted += convertTokenToBaseCurrency(tokenData.income, tokenData.token, currencyPreference);
+      totalExpensesConverted += convertTokenToBaseCurrency(tokenData.expenses, tokenData.token, currencyPreference);
+    });
+
     const unclassified = allTransactions.filter(t => !t.classified).length;
     const totalTransactions = filteredTransactions.length;
 
-    return { tokenStats, unclassified, totalTransactions };
-  }, [allTransactions, tokenFilter]);
+    return {
+      tokenStats,
+      unclassified,
+      totalTransactions,
+      totalIncomeConverted,
+      totalExpensesConverted,
+      netConverted: totalIncomeConverted - totalExpensesConverted
+    };
+  }, [allTransactions, tokenFilter, currencyPreference]);
 
   const handleRefresh = () => {
     fetchAllTransactions();
@@ -78,6 +108,72 @@ export function Dashboard({ onPageChange }: DashboardProps) {
       </div>
 
       <WalletConnection />
+
+      {/* Aggregated Portfolio Stats */}
+      {Object.keys(stats.tokenStats).length > 0 && (
+        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300">
+          <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
+                <PieChart className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Portfolio Summary ({currencyPreference.baseCurrency})
+              </h3>
+              {tokenFilter.enabled && (
+                <span className="text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full">
+                  Filtered
+                </span>
+              )}
+            </div>
+          </div>
+          
+          <div className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-green-600 dark:text-green-400">Total Income</p>
+                    <p className="text-xl font-bold text-green-700 dark:text-green-300">
+                      {formatCurrencyAmount(stats.totalIncomeConverted, currencyPreference.baseCurrency)}
+                    </p>
+                  </div>
+                  <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-red-600 dark:text-red-400">Total Expenses</p>
+                    <p className="text-xl font-bold text-red-700 dark:text-red-300">
+                      {formatCurrencyAmount(stats.totalExpensesConverted, currencyPreference.baseCurrency)}
+                    </p>
+                  </div>
+                  <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Net Total</p>
+                    <p className={`text-xl font-bold ${
+                      stats.netConverted >= 0
+                        ? 'text-green-700 dark:text-green-300'
+                        : 'text-red-700 dark:text-red-300'
+                    }`}>
+                      {stats.netConverted >= 0 ? '+' : ''}
+                      {formatCurrencyAmount(stats.netConverted, currencyPreference.baseCurrency)}
+                    </p>
+                  </div>
+                  <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Token-specific stats */}
       {Object.keys(stats.tokenStats).length > 0 && (
@@ -115,7 +211,7 @@ export function Dashboard({ onPageChange }: DashboardProps) {
                       <div>
                         <p className="text-sm font-medium text-green-600 dark:text-green-400">Income</p>
                         <p className="text-xl font-bold text-green-700 dark:text-green-300">
-                          {formatTokenAmount(tokenData.income, tokenData.token)}
+                          {formatTokenAmountWithCurrency(tokenData.income, tokenData.token, currencyPreference, false)}
                         </p>
                       </div>
                       <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -127,7 +223,7 @@ export function Dashboard({ onPageChange }: DashboardProps) {
                       <div>
                         <p className="text-sm font-medium text-red-600 dark:text-red-400">Expenses</p>
                         <p className="text-xl font-bold text-red-700 dark:text-red-300">
-                          {formatTokenAmount(tokenData.expenses, tokenData.token)}
+                          {formatTokenAmountWithCurrency(tokenData.expenses, tokenData.token, currencyPreference, false)}
                         </p>
                       </div>
                       <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
@@ -144,7 +240,7 @@ export function Dashboard({ onPageChange }: DashboardProps) {
                             : 'text-red-700 dark:text-red-300'
                         }`}>
                           {tokenData.income - tokenData.expenses >= 0 ? '+' : ''}
-                          {formatTokenAmount(tokenData.income - tokenData.expenses, tokenData.token)}
+                          {formatTokenAmountWithCurrency(tokenData.income - tokenData.expenses, tokenData.token, currencyPreference, false)}
                         </p>
                       </div>
                       <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />

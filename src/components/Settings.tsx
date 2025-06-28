@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { WalletConfig, RPCConfig } from '../types';
-import { Settings as SettingsIcon, Plus, Trash2, Eye, EyeOff, Download, Upload, AlertTriangle, RefreshCw, Server, Globe, Zap } from 'lucide-react';
-import { saveWalletConfigs, loadWalletConfigs, exportData, importData, clearAllData, saveRPCConfig, loadRPCConfig, saveAutoRefreshSetting, loadAutoRefreshSetting } from '../utils/storage';
+import { WalletConfig, RPCConfig, CurrencyPreference } from '../types';
+import { Settings as SettingsIcon, Plus, Trash2, Eye, EyeOff, Download, Upload, AlertTriangle, RefreshCw, Server, Globe, Zap, DollarSign } from 'lucide-react';
+import { saveWalletConfigs, loadWalletConfigs, exportData, importData, clearAllData, saveRPCConfig, loadRPCConfig, saveAutoRefreshSetting, loadAutoRefreshSetting, saveCurrencyPreference, loadCurrencyPreference } from '../utils/storage';
 import { useTransactions } from '../hooks/useTransactions';
 import { PublicKey } from '@solana/web3.js';
 
@@ -55,6 +55,7 @@ export function Settings() {
   const [newRPCConfig, setNewRPCConfig] = useState<RPCConfig>(rpcConfig);
   const [isInitialized, setIsInitialized] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(() => loadAutoRefreshSetting());
+  const [currencyPreference, setCurrencyPreference] = useState<CurrencyPreference>(() => loadCurrencyPreference());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { fetchAllTransactions, loading } = useTransactions();
 
@@ -271,6 +272,16 @@ export function Settings() {
     saveAutoRefreshSetting(newValue);
   };
 
+  const handleCurrencyChange = (newCurrency: 'SOL' | 'USD') => {
+    const newPreference: CurrencyPreference = {
+      ...currencyPreference,
+      baseCurrency: newCurrency,
+      lastUpdated: new Date()
+    };
+    setCurrencyPreference(newPreference);
+    saveCurrencyPreference(newPreference);
+  };
+
   // Don't render until initialized to prevent hydration issues
   if (!isInitialized) {
     return (
@@ -372,6 +383,93 @@ export function Settings() {
             onChange={handleFileImport}
             className="hidden"
           />
+        </div>
+      </div>
+
+      {/* Currency Preference Section */}
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300">
+        <div className="p-6 border-b border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-2xl flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Currency Display Preference
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Choose how you want monetary values to be displayed throughout the app
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Default Currency
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => handleCurrencyChange('SOL')}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    currencyPreference.baseCurrency === 'SOL'
+                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <img
+                        src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png"
+                        alt="SOL"
+                        className="w-6 h-6"
+                      />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold">SOL</div>
+                      <div className="text-xs opacity-70">Solana</div>
+                    </div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => handleCurrencyChange('USD')}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    currencyPreference.baseCurrency === 'USD'
+                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                      <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold">USD</div>
+                      <div className="text-xs opacity-70">US Dollar</div>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-3 bg-blue-50/80 dark:bg-blue-900/20 rounded-xl">
+              <div className="flex items-start space-x-2">
+                <Zap className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  <p className="font-medium mb-1">Currency Conversion Info</p>
+                  <ul className="text-xs space-y-1 text-blue-600 dark:text-blue-400">
+                    <li>• All values will be displayed in your selected currency</li>
+                    <li>• Original token amounts shown in parentheses for reference</li>
+                    <li>• Exchange rates are updated automatically (mock rates in demo)</li>
+                    <li>• Dashboard aggregation uses converted values for totals</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

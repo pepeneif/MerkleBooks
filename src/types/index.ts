@@ -62,3 +62,11 @@ export interface RPCConfig {
   network: 'mainnet-beta' | 'devnet' | 'testnet' | 'custom';
   name: string;
 }
+
+export interface CurrencyPreference {
+  baseCurrency: 'SOL' | 'USD';
+  exchangeRates?: {
+    [key: string]: number; // Token symbol to base currency rate
+  };
+  lastUpdated?: Date;
+}

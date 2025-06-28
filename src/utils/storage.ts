@@ -1,10 +1,11 @@
-import { Transaction, Invoice, WalletConfig, RPCConfig } from '../types';
+import { Transaction, Invoice, WalletConfig, RPCConfig, CurrencyPreference } from '../types';
 
 export interface AppData {
   transactions: Transaction[];
   invoices: Invoice[];
   walletConfigs: WalletConfig[];
   rpcConfig?: RPCConfig;
+  currencyPreference?: CurrencyPreference;
   version: string;
   exportDate: string;
 }
@@ -15,6 +16,7 @@ const STORAGE_KEYS = {
   WALLET_CONFIGS: 'solbooks_wallet_configs',
   RPC_CONFIG: 'solbooks_rpc_config',
   AUTO_REFRESH: 'solbooks_auto_refresh',
+  CURRENCY_PREFERENCE: 'solbooks_currency_preference',
 } as const;
 
 // Transaction storage
@@ -142,6 +144,7 @@ export const exportData = (): string => {
     invoices: loadInvoices(),
     walletConfigs: loadWalletConfigs(),
     rpcConfig: loadRPCConfig(),
+    currencyPreference: loadCurrencyPreference(),
     version: '1.0.0',
     exportDate: new Date().toISOString(),
   };
@@ -169,6 +172,11 @@ export const importData = (jsonData: string): { success: boolean; error?: string
       saveRPCConfig(data.rpcConfig);
     }
     
+    // Import currency preference if available
+    if (data.currencyPreference) {
+      saveCurrencyPreference(data.currencyPreference);
+    }
+    
     return { success: true };
   } catch (error) {
     return { success: false, error: 'Failed to parse JSON data' };
@@ -194,6 +202,37 @@ export const loadAutoRefreshSetting = (): boolean => {
   }
 };
 
+// Currency preference storage
+export const saveCurrencyPreference = (preference: CurrencyPreference) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.CURRENCY_PREFERENCE, JSON.stringify(preference));
+  } catch (error) {
+    console.error('Failed to save currency preference:', error);
+  }
+};
+
+export const loadCurrencyPreference = (): CurrencyPreference => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.CURRENCY_PREFERENCE);
+    if (stored) {
+      const preference = JSON.parse(stored);
+      return {
+        ...preference,
+        lastUpdated: preference.lastUpdated ? new Date(preference.lastUpdated) : undefined
+      };
+    }
+  } catch (error) {
+    console.error('Failed to load currency preference:', error);
+  }
+  
+  // Default currency preference
+  return {
+    baseCurrency: 'SOL',
+    exchangeRates: {},
+    lastUpdated: undefined
+  };
+};
+
 // Clear all data
 export const clearAllData = () => {
   try {
@@ -202,6 +241,7 @@ export const clearAllData = () => {
     localStorage.removeItem(STORAGE_KEYS.WALLET_CONFIGS);
     localStorage.removeItem(STORAGE_KEYS.RPC_CONFIG);
     localStorage.removeItem(STORAGE_KEYS.AUTO_REFRESH);
+    localStorage.removeItem(STORAGE_KEYS.CURRENCY_PREFERENCE);
     localStorage.removeItem('solbooks_token_filter');
   } catch (error) {
     console.error('Failed to clear data:', error);
