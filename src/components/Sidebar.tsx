@@ -4,7 +4,7 @@ import {
   Receipt, 
   FileText, 
   Settings, 
-  TrendingUp,
+  Tags,
   Menu,
   X
 } from 'lucide-react';
@@ -19,7 +19,7 @@ const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'transactions', label: 'Transactions', icon: Receipt },
   { id: 'invoices', label: 'Invoices', icon: FileText },
-  { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+  { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 

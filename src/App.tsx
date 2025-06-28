@@ -6,6 +6,7 @@ import { Dashboard } from './components/Dashboard';
 import { TransactionList } from './components/TransactionList';
 import { InvoiceManager } from './components/InvoiceManager';
 import { Settings } from './components/Settings';
+import { Categories } from './components/Categories';
 import { useTransactions } from './hooks/useTransactions';
 
 function AppContent() {
@@ -38,6 +39,8 @@ function AppContent() {
         return <InvoiceManager />;
       case 'settings':
         return <Settings />;
+      case 'categories':
+        return <Categories />;
       default:
         return <Dashboard />;
     }
