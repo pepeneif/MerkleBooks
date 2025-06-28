@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { WalletConfig, RPCConfig } from '../types';
 import { Settings as SettingsIcon, Plus, Trash2, Eye, EyeOff, Download, Upload, AlertTriangle, RefreshCw, Server, Globe, Zap } from 'lucide-react';
-import { saveWalletConfigs, loadWalletConfigs, exportData, importData, clearAllData, saveRPCConfig, loadRPCConfig } from '../utils/storage';
+import { saveWalletConfigs, loadWalletConfigs, exportData, importData, clearAllData, saveRPCConfig, loadRPCConfig, saveAutoRefreshSetting, loadAutoRefreshSetting } from '../utils/storage';
 import { useTransactions } from '../hooks/useTransactions';
 import { PublicKey } from '@solana/web3.js';
 
@@ -54,6 +54,7 @@ export function Settings() {
   const [showRPCForm, setShowRPCForm] = useState(false);
   const [newRPCConfig, setNewRPCConfig] = useState<RPCConfig>(rpcConfig);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(() => loadAutoRefreshSetting());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { fetchAllTransactions, loading } = useTransactions();
 
@@ -264,6 +265,12 @@ export function Settings() {
     }
   };
 
+  const handleAutoRefreshToggle = () => {
+    const newValue = !autoRefresh;
+    setAutoRefresh(newValue);
+    saveAutoRefreshSetting(newValue);
+  };
+
   // Don't render until initialized to prevent hydration issues
   if (!isInitialized) {
     return (
@@ -299,11 +306,39 @@ export function Settings() {
             Data Management
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Export your data for backup or import from another device
+            Configure automatic data refresh and manage your data backups
           </p>
         </div>
         
         <div className="p-6">
+          {/* Auto-refresh setting */}
+          <div className="mb-6 p-4 bg-gray-50/80 dark:bg-gray-800/50 rounded-xl backdrop-blur-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                  Automatic Data Refresh
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Automatically refresh transactions and balances in the background
+                </p>
+              </div>
+              <button
+                onClick={handleAutoRefreshToggle}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                  autoRefresh
+                    ? 'bg-orange-600'
+                    : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                    autoRefresh ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={handleExport}

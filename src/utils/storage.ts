@@ -14,6 +14,7 @@ const STORAGE_KEYS = {
   INVOICES: 'solbooks_invoices',
   WALLET_CONFIGS: 'solbooks_wallet_configs',
   RPC_CONFIG: 'solbooks_rpc_config',
+  AUTO_REFRESH: 'solbooks_auto_refresh',
 } as const;
 
 // Transaction storage
@@ -174,6 +175,25 @@ export const importData = (jsonData: string): { success: boolean; error?: string
   }
 };
 
+// Auto-refresh setting storage
+export const saveAutoRefreshSetting = (enabled: boolean) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.AUTO_REFRESH, JSON.stringify(enabled));
+  } catch (error) {
+    console.error('Failed to save auto-refresh setting:', error);
+  }
+};
+
+export const loadAutoRefreshSetting = (): boolean => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.AUTO_REFRESH);
+    return stored ? JSON.parse(stored) : false; // Default to false (disabled)
+  } catch (error) {
+    console.error('Failed to load auto-refresh setting:', error);
+    return false; // Default to false on error
+  }
+};
+
 // Clear all data
 export const clearAllData = () => {
   try {
@@ -181,6 +201,7 @@ export const clearAllData = () => {
     localStorage.removeItem(STORAGE_KEYS.INVOICES);
     localStorage.removeItem(STORAGE_KEYS.WALLET_CONFIGS);
     localStorage.removeItem(STORAGE_KEYS.RPC_CONFIG);
+    localStorage.removeItem(STORAGE_KEYS.AUTO_REFRESH);
     localStorage.removeItem('solbooks_token_filter');
   } catch (error) {
     console.error('Failed to clear data:', error);

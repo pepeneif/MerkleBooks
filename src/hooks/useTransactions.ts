@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, ParsedAccountData } from '@solana/web3.js';
 import { Transaction, TokenFilter } from '../types';
-import { saveTransactions, loadTransactions, loadWalletConfigs } from '../utils/storage';
+import { saveTransactions, loadTransactions, loadWalletConfigs, loadAutoRefreshSetting } from '../utils/storage';
 import { SOL_TOKEN, getTokenByMint } from '../utils/tokens';
 
 // Debounce utility function
@@ -58,7 +58,7 @@ export function useTransactions() {
     setLoading(true);
     try {
       const walletConfigs = loadWalletConfigs();
-      const walletsToFetch = [];
+      const walletsToFetch: Array<{address: string, name: string, isActive: boolean}> = [];
 
       // Add connected wallet if it exists
       if (publicKey) {
@@ -176,10 +176,11 @@ export function useTransactions() {
     [fetchAllTransactions]
   );
 
-  // Only fetch on initial load and when explicitly requested
+  // Only fetch on initial load when auto-refresh is enabled
   useEffect(() => {
-    // Only auto-fetch if we have wallets and no existing transactions
-    if ((publicKey || loadWalletConfigs().length > 0) && transactions.length === 0) {
+    // Only auto-fetch if auto-refresh is enabled, we have wallets, and no existing transactions
+    const autoRefreshEnabled = loadAutoRefreshSetting();
+    if (autoRefreshEnabled && (publicKey || loadWalletConfigs().length > 0) && transactions.length === 0) {
       const timer = setTimeout(() => {
         fetchAllTransactions();
       }, 2000); // Delay initial fetch
@@ -188,11 +189,15 @@ export function useTransactions() {
     }
   }, [publicKey, connection]); // Removed fetchAllTransactions from deps to prevent loops
 
-  // Listen for storage changes with debouncing
+  // Listen for storage changes with debouncing - only if auto-refresh is enabled
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'solbooks_wallet_configs') {
-        debouncedFetchAllTransactions();
+        // Check if auto-refresh is enabled before auto-fetching
+        const autoRefreshEnabled = loadAutoRefreshSetting();
+        if (autoRefreshEnabled) {
+          debouncedFetchAllTransactions();
+        }
       }
     };
 
