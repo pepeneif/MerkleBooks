@@ -1,9 +1,10 @@
-import { Transaction, Invoice, WalletConfig, RPCConfig, CurrencyPreference } from '../types';
+import { Transaction, Invoice, WalletConfig, RPCConfig, CurrencyPreference, Category } from '../types';
 
 export interface AppData {
   transactions: Transaction[];
   invoices: Invoice[];
   walletConfigs: WalletConfig[];
+  categories: Category[];
   rpcConfig?: RPCConfig;
   currencyPreference?: CurrencyPreference;
   version: string;
@@ -17,6 +18,7 @@ const STORAGE_KEYS = {
   RPC_CONFIG: 'solbooks_rpc_config',
   AUTO_REFRESH: 'solbooks_auto_refresh',
   CURRENCY_PREFERENCE: 'solbooks_currency_preference',
+  CATEGORIES: 'solbooks_categories',
 } as const;
 
 // Transaction storage
@@ -89,6 +91,48 @@ export const loadInvoices = (): Invoice[] => {
   }
 };
 
+// Category storage
+export const saveCategories = (categories: Category[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+  } catch (error) {
+    console.error('Failed to save categories:', error);
+  }
+};
+
+export const loadCategories = (): Category[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
+    
+    if (!stored) {
+      return getDefaultCategories();
+    }
+    
+    const parsed = JSON.parse(stored);
+    return parsed;
+  } catch (error) {
+    console.error('Failed to load categories:', error);
+    return getDefaultCategories();
+  }
+};
+
+// Default categories
+export const getDefaultCategories = (): Category[] => {
+  return [
+    { id: '1', name: 'Salary', type: 'income', color: '#10b981', icon: '💰' },
+    { id: '2', name: 'Investment', type: 'income', color: '#3b82f6', icon: '📈' },
+    { id: '3', name: 'Trading', type: 'income', color: '#8b5cf6', icon: '💹' },
+    { id: '4', name: 'DeFi Rewards', type: 'income', color: '#06b6d4', icon: '🏆' },
+    { id: '5', name: 'NFT Sales', type: 'income', color: '#f59e0b', icon: '🖼️' },
+    { id: '6', name: 'Office Supplies', type: 'expense', color: '#ef4444', icon: '📎' },
+    { id: '7', name: 'Marketing', type: 'expense', color: '#f97316', icon: '📢' },
+    { id: '8', name: 'Software', type: 'expense', color: '#84cc16', icon: '💻' },
+    { id: '9', name: 'Transaction Fees', type: 'expense', color: '#6b7280', icon: '⛽' },
+    { id: '10', name: 'Other', type: 'expense', color: '#64748b', icon: '📋' },
+    { id: '11', name: 'Uncategorized', type: 'expense', color: '#9ca3af', icon: '❓' }
+  ];
+};
+
 // Wallet config storage
 export const saveWalletConfigs = (configs: WalletConfig[]) => {
   try {
@@ -143,6 +187,7 @@ export const exportData = (): string => {
     transactions: loadTransactions(),
     invoices: loadInvoices(),
     walletConfigs: loadWalletConfigs(),
+    categories: loadCategories(),
     rpcConfig: loadRPCConfig(),
     currencyPreference: loadCurrencyPreference(),
     version: '1.0.0',
@@ -166,6 +211,11 @@ export const importData = (jsonData: string): { success: boolean; error?: string
     saveTransactions(data.transactions);
     saveInvoices(data.invoices);
     saveWalletConfigs(data.walletConfigs);
+    
+    // Import categories if available, otherwise use defaults
+    if (data.categories) {
+      saveCategories(data.categories);
+    }
     
     // Import RPC config if available
     if (data.rpcConfig) {
@@ -239,6 +289,7 @@ export const clearAllData = () => {
     localStorage.removeItem(STORAGE_KEYS.TRANSACTIONS);
     localStorage.removeItem(STORAGE_KEYS.INVOICES);
     localStorage.removeItem(STORAGE_KEYS.WALLET_CONFIGS);
+    localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
     localStorage.removeItem(STORAGE_KEYS.RPC_CONFIG);
     localStorage.removeItem(STORAGE_KEYS.AUTO_REFRESH);
     localStorage.removeItem(STORAGE_KEYS.CURRENCY_PREFERENCE);

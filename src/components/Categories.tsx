@@ -1,10 +1,6 @@
-import React, { useState } from 'react';
-
-interface Category {
-  name: string;
-  description: string;
-  type: 'income' | 'expense';
-}
+import React, { useState, useEffect } from 'react';
+import { Category } from '../types';
+import { loadCategories, saveCategories } from '../utils/storage';
 
 export function Categories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -13,6 +9,12 @@ export function Categories() {
     description: '',
     type: 'income' as 'income' | 'expense',
   });
+
+  // Load categories on component mount
+  useEffect(() => {
+    const loadedCategories = loadCategories();
+    setCategories(loadedCategories);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -23,11 +25,53 @@ export function Categories() {
     setNewCategory(prev => ({ ...prev, type: e.target.value as 'income' | 'expense' }));
   };
 
+  // Generate default color and icon based on type and existing categories
+  const getDefaultCategoryProps = (type: 'income' | 'expense') => {
+    const incomeColors = ['#10b981', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b'];
+    const expenseColors = ['#ef4444', '#f97316', '#84cc16', '#6b7280', '#64748b'];
+    const incomeIcons = ['💰', '📈', '💹', '🏆', '🎯'];
+    const expenseIcons = ['📎', '📢', '💻', '⛽', '📋'];
+    
+    const existingCount = categories.filter(cat => cat.type === type).length;
+    const colors = type === 'income' ? incomeColors : expenseColors;
+    const icons = type === 'income' ? incomeIcons : expenseIcons;
+    
+    return {
+      color: colors[existingCount % colors.length],
+      icon: icons[existingCount % icons.length]
+    };
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newCategory.name.trim() === '') return;
-    setCategories((prev: Category[]) => [...prev, newCategory]);
+    
+    const { color, icon } = getDefaultCategoryProps(newCategory.type);
+    const categoryToAdd: Category = {
+      id: Date.now().toString(), // Simple ID generation
+      name: newCategory.name.trim(),
+      type: newCategory.type,
+      color,
+      icon
+    };
+    
+    // Use functional update to ensure we have the latest state
+    setCategories(prevCategories => {
+      const updatedCategories = [...prevCategories, categoryToAdd];
+      
+      // Save to localStorage inside the functional update
+      saveCategories(updatedCategories);
+      
+      return updatedCategories;
+    });
+    
     setNewCategory({ name: '', description: '', type: 'income' });
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    const updatedCategories = categories.filter(cat => cat.id !== categoryId);
+    setCategories(updatedCategories);
+    saveCategories(updatedCategories);
   };
 
   return (
@@ -57,20 +101,6 @@ export function Categories() {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
                   placeholder="e.g., Internet Hosting"
                   required
-                />
-              </div>
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={newCategory.description}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
-                  placeholder="e.g., Server Hosting for the Appllication"
                 />
               </div>
               <div>
@@ -128,25 +158,30 @@ export function Categories() {
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Description
+                      Category
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Type
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800/50 divide-y divide-gray-200/50 dark:divide-gray-700/50">
                   {categories.length > 0 ? (
-                    categories.map((cat: Category, index: number) => (
-                      <tr key={index}>
+                    categories.map((cat: Category) => (
+                      <tr key={cat.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                          {cat.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {cat.description}
+                          <div className="flex items-center space-x-3">
+                            <span
+                              className="w-4 h-4 rounded-full flex items-center justify-center text-xs"
+                              style={{ backgroundColor: cat.color, color: 'white' }}
+                            >
+                              {cat.icon}
+                            </span>
+                            <span>{cat.name}</span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <span
@@ -158,6 +193,17 @@ export function Categories() {
                           >
                             {cat.type}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {/* Only allow deletion of custom categories (not default ones) */}
+                          {(parseInt(cat.id) > 11 || cat.id.length > 2) && (
+                            <button
+                              onClick={() => handleDeleteCategory(cat.id)}
+                              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
+                            >
+                              Delete
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
