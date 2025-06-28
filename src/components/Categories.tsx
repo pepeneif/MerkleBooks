@@ -121,7 +121,7 @@ export function Categories() {
         <div className="md:col-span-2">
           <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300">
             <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Existing Categories</h2>
+              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Existing Categories</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200/50 dark:divide-gray-700/50">
