@@ -497,8 +497,8 @@ export function Settings() {
 
         {showAddForm && (
           <div className="p-6 border-b border-gray-200/50 dark:border-gray-700/50 bg-gray-50/80 dark:bg-gray-800/50 backdrop-blur-sm">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Wallet Name
                 </label>
@@ -510,7 +510,7 @@ export function Settings() {
                   placeholder="My Trading Wallet"
                 />
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Wallet Address
                 </label>
