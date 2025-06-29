@@ -3,11 +3,12 @@ import { WalletConnection } from './WalletConnection';
 import { TokenSelector } from './TokenSelector';
 import { useTransactions } from '../hooks/useTransactions';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw, Receipt, PieChart } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw, Receipt, PieChart, Plus, Settings as SettingsIcon, Trash2, Eye, EyeOff } from 'lucide-react';
 import { formatTokenAmount } from '../utils/tokens';
 import { convertTokenToBaseCurrencySync, formatCurrencyAmount, formatTokenAmountWithCurrency } from '../utils/currency';
-import { loadCurrencyPreference } from '../utils/storage';
-import { CurrencyPreference } from '../types';
+import { loadCurrencyPreference, saveWalletConfigs, loadWalletConfigs } from '../utils/storage';
+import { CurrencyPreference, WalletConfig } from '../types';
+import { PublicKey } from '@solana/web3.js';
 
 interface DashboardProps {
   onPageChange: (page: string) => void;
@@ -16,6 +17,10 @@ interface DashboardProps {
 export function Dashboard({ onPageChange }: DashboardProps) {
   const { connected } = useWallet();
   const [currencyPreference, setCurrencyPreference] = useState<CurrencyPreference>(() => loadCurrencyPreference());
+  const [wallets, setWallets] = useState<WalletConfig[]>([]);
+  const [newWallet, setNewWallet] = useState({ address: '', name: '' });
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const {
     allTransactions,
     loading,
@@ -23,6 +28,31 @@ export function Dashboard({ onPageChange }: DashboardProps) {
     tokenFilter,
     setTokenFilter
   } = useTransactions();
+
+  // Load wallet configs from localStorage on mount
+  useEffect(() => {
+    if (!isInitialized) {
+      try {
+        const savedWallets = loadWalletConfigs();
+        setWallets(savedWallets);
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Error loading wallet configs:', error);
+        setIsInitialized(true);
+      }
+    }
+  }, [isInitialized]);
+
+  // Save wallet configs to localStorage when wallets change and initialized
+  useEffect(() => {
+    if (isInitialized && wallets.length >= 0) {
+      try {
+        saveWalletConfigs(wallets);
+      } catch (error) {
+        console.error('Error saving wallet configs:', error);
+      }
+    }
+  }, [wallets, isInitialized]);
 
   // Listen for currency preference changes
   useEffect(() => {
@@ -81,6 +111,189 @@ export function Dashboard({ onPageChange }: DashboardProps) {
   const handleRefresh = () => {
     fetchAllTransactions();
   };
+
+  const addWallet = () => {
+    if (!newWallet.address || !newWallet.name) return;
+
+    // Validate Solana address format
+    try {
+      new PublicKey(newWallet.address);
+    } catch (error) {
+      alert('Invalid Solana wallet address. Please check the address and try again.');
+      return;
+    }
+
+    // Check for duplicate addresses
+    const isDuplicate = wallets.some(w => w.address === newWallet.address);
+    if (isDuplicate) {
+      alert('This wallet address is already being monitored.');
+      return;
+    }
+
+    const wallet: WalletConfig = {
+      id: Date.now().toString(),
+      address: newWallet.address,
+      name: newWallet.name,
+      isActive: true,
+      balance: 0,
+    };
+
+    setWallets(prev => [...prev, wallet]);
+    setNewWallet({ address: '', name: '' });
+    setShowAddForm(false);
+    
+    // Trigger transaction refresh after a delay
+    setTimeout(() => {
+      fetchAllTransactions();
+    }, 1000);
+  };
+
+  const removeWallet = (id: string) => {
+    if (confirm('Are you sure you want to remove this wallet from monitoring?')) {
+      setWallets(prev => prev.filter(w => w.id !== id));
+    }
+  };
+
+  const toggleWallet = (id: string) => {
+    setWallets(prev =>
+      prev.map(w => w.id === id ? { ...w, isActive: !w.isActive } : w)
+    );
+  };
+
+  // Don't render until initialized to prevent hydration issues
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+      </div>
+    );
+  }
+
+  // Show wallet setup screen if no wallets are configured
+  if (wallets.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <SettingsIcon className="w-10 h-10 text-orange-600 dark:text-orange-400" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome to Merkle.Space</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-lg max-w-2xl mx-auto">
+            Let's get started by adding your first wallet to monitor. You can add multiple Solana wallet addresses to track all your transactions in one place.
+          </p>
+        </div>
+
+        {/* Wallet Setup Section */}
+        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 max-w-4xl mx-auto">
+          <div className="p-6 border-b border-gray-200/50 dark:border-gray-700/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Add Your First Wallet
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Enter your Solana wallet address to start monitoring transactions
+                </p>
+              </div>
+              {!showAddForm && (
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Add Wallet</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {showAddForm && (
+            <div className="p-6 bg-gray-50/80 dark:bg-gray-800/50 backdrop-blur-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Wallet Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newWallet.name}
+                    onChange={(e) => setNewWallet(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
+                    placeholder="My Trading Wallet"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Wallet Address
+                  </label>
+                  <input
+                    type="text"
+                    value={newWallet.address}
+                    onChange={(e) => setNewWallet(prev => ({ ...prev, address: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
+                    placeholder="Solana wallet address"
+                  />
+                </div>
+              </div>
+              <div className="flex space-x-3 mt-4">
+                <button
+                  onClick={addWallet}
+                  disabled={!newWallet.address || !newWallet.name}
+                  className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white rounded-xl transition-all duration-200"
+                >
+                  Add Wallet
+                </button>
+                <button
+                  onClick={() => setShowAddForm(false)}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-xl transition-all duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!showAddForm && (
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <SettingsIcon className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Ready to Start</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">Click "Add Wallet" above to configure your first wallet address for monitoring</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>Track SOL & SPL tokens</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span>Classify transactions</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span>Generate reports</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Quick Access to Settings */}
+        <div className="text-center">
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+            Need to configure RPC settings or import existing data?
+          </p>
+          <button
+            onClick={() => onPageChange('settings')}
+            className="inline-flex items-center space-x-2 px-4 py-2 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-xl transition-all duration-200"
+          >
+            <SettingsIcon className="w-4 h-4" />
+            <span>Go to Settings</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
