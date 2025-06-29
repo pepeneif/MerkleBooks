@@ -50,6 +50,7 @@ export function Categories() {
     const categoryToAdd: Category = {
       id: Date.now().toString(), // Simple ID generation
       name: newCategory.name.trim(),
+      description: newCategory.description.trim() || undefined,
       type: newCategory.type,
       color,
       icon
@@ -101,6 +102,20 @@ export function Categories() {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
                   placeholder="e.g., Internet Hosting"
                   required
+                />
+              </div>
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={newCategory.description}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
+                  placeholder="Optional description or context for this category"
+                  rows={2}
                 />
               </div>
               <div>
@@ -161,6 +176,9 @@ export function Categories() {
                       Category
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Type
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -183,6 +201,11 @@ export function Categories() {
                             <span>{cat.name}</span>
                           </div>
                         </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="max-w-xs truncate">
+                            {cat.description || '-'}
+                          </div>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <span
                             className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -195,21 +218,18 @@ export function Categories() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {/* Only allow deletion of custom categories (not default ones) */}
-                          {(parseInt(cat.id) > 11 || cat.id.length > 2) && (
-                            <button
-                              onClick={() => handleDeleteCategory(cat.id)}
-                              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
-                            >
-                              Delete
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleDeleteCategory(cat.id)}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
+                          >
+                            Delete
+                          </button>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                      <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                         No categories added yet.
                       </td>
                     </tr>

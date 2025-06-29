@@ -119,17 +119,17 @@ export const loadCategories = (): Category[] => {
 // Default categories
 export const getDefaultCategories = (): Category[] => {
   return [
-    { id: '1', name: 'Salary', type: 'income', color: '#10b981', icon: '💰' },
-    { id: '2', name: 'Investment', type: 'income', color: '#3b82f6', icon: '📈' },
-    { id: '3', name: 'Trading', type: 'income', color: '#8b5cf6', icon: '💹' },
-    { id: '4', name: 'DeFi Rewards', type: 'income', color: '#06b6d4', icon: '🏆' },
-    { id: '5', name: 'NFT Sales', type: 'income', color: '#f59e0b', icon: '🖼️' },
-    { id: '6', name: 'Office Supplies', type: 'expense', color: '#ef4444', icon: '📎' },
-    { id: '7', name: 'Marketing', type: 'expense', color: '#f97316', icon: '📢' },
-    { id: '8', name: 'Software', type: 'expense', color: '#84cc16', icon: '💻' },
-    { id: '9', name: 'Transaction Fees', type: 'expense', color: '#6b7280', icon: '⛽' },
-    { id: '10', name: 'Other', type: 'expense', color: '#64748b', icon: '📋' },
-    { id: '11', name: 'Uncategorized', type: 'expense', color: '#9ca3af', icon: '❓' }
+    { id: '1', name: 'Salary', description: 'Regular employment income and wages', type: 'income', color: '#10b981', icon: '💰' },
+    { id: '2', name: 'Investment', description: 'Returns from traditional investments and portfolio gains', type: 'income', color: '#3b82f6', icon: '📈' },
+    { id: '3', name: 'Trading', description: 'Profits from cryptocurrency and token trading', type: 'income', color: '#8b5cf6', icon: '💹' },
+    { id: '4', name: 'DeFi Rewards', description: 'Staking rewards, liquidity mining, and yield farming', type: 'income', color: '#06b6d4', icon: '🏆' },
+    { id: '5', name: 'NFT Sales', description: 'Income from selling NFTs and digital collectibles', type: 'income', color: '#f59e0b', icon: '🖼️' },
+    { id: '6', name: 'Office Supplies', description: 'Business equipment, stationery, and office materials', type: 'expense', color: '#ef4444', icon: '📎' },
+    { id: '7', name: 'Marketing', description: 'Advertising, promotion, and marketing campaign costs', type: 'expense', color: '#f97316', icon: '📢' },
+    { id: '8', name: 'Software', description: 'Software licenses, SaaS subscriptions, and development tools', type: 'expense', color: '#84cc16', icon: '💻' },
+    { id: '9', name: 'Transaction Fees', description: 'Blockchain gas fees and transaction costs', type: 'expense', color: '#6b7280', icon: '⛽' },
+    { id: '10', name: 'Other', description: 'Miscellaneous expenses that don\'t fit other categories', type: 'expense', color: '#64748b', icon: '📋' },
+    { id: '11', name: 'Uncategorized', description: 'Transactions that haven\'t been classified yet', type: 'expense', color: '#9ca3af', icon: '❓' }
   ];
 };
 

@@ -47,6 +47,7 @@ export interface Invoice {
 export interface Category {
   id: string;
   name: string;
+  description?: string;
   type: 'income' | 'expense';
   color: string;
   icon: string;

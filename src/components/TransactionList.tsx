@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Transaction } from '../types';
-import { 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Calendar, 
-  Tag, 
+import React, { useState, useEffect } from 'react';
+import { Transaction, Category } from '../types';
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  Calendar,
+  Tag,
   Edit3,
   Check,
   X,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { formatTokenAmount } from '../utils/tokens';
 import { useTransactions } from '../hooks/useTransactions';
+import { loadCategories } from '../utils/storage';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -20,16 +21,18 @@ interface TransactionListProps {
   showRefreshButton?: boolean;
 }
 
-const categories = [
-  'Salary', 'Investment', 'Trading', 'DeFi Rewards', 'NFT Sales',
-  'Office Supplies', 'Marketing', 'Software', 'Transaction Fees', 'Other'
-];
-
 export function TransactionList({ transactions, onClassifyTransaction, showRefreshButton = false }: TransactionListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCategory, setEditCategory] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
   const { fetchAllTransactions, loading } = useTransactions();
+
+  // Load categories on component mount
+  useEffect(() => {
+    const loadedCategories = loadCategories();
+    setCategories(loadedCategories);
+  }, []);
 
   const startEditing = (transaction: Transaction) => {
     setEditingId(transaction.id);
@@ -215,7 +218,7 @@ export function TransactionList({ transactions, onClassifyTransaction, showRefre
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
                         >
                           {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
+                            <option key={cat.id} value={cat.name}>{cat.name}</option>
                           ))}
                         </select>
                       </div>
