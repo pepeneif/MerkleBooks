@@ -48,7 +48,7 @@ export interface Category {
   id: string;
   name: string;
   description?: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'neutral';
   color: string;
   icon: string;
 }

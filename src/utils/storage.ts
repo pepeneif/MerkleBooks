@@ -129,7 +129,7 @@ export const getDefaultCategories = (): Category[] => {
     { id: '8', name: 'Software', description: 'Software licenses, SaaS subscriptions, and development tools', type: 'expense', color: '#84cc16', icon: '💻' },
     { id: '9', name: 'Transaction Fees', description: 'Blockchain gas fees and transaction costs', type: 'expense', color: '#6b7280', icon: '⛽' },
     { id: '10', name: 'Other', description: 'Miscellaneous expenses that don\'t fit other categories', type: 'expense', color: '#64748b', icon: '📋' },
-    { id: '11', name: 'Uncategorized', description: 'Transactions that haven\'t been classified yet', type: 'expense', color: '#9ca3af', icon: '❓' }
+    { id: '11', name: 'Uncategorized', description: 'Transactions that haven\'t been classified yet', type: 'neutral', color: '#9ca3af', icon: '❓' }
   ];
 };
 
