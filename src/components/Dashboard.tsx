@@ -107,8 +107,6 @@ export function Dashboard({ onPageChange }: DashboardProps) {
         </div>
       </div>
 
-      <WalletConnection />
-
       {/* Aggregated Portfolio Stats */}
       {Object.keys(stats.tokenStats).length > 0 && (
         <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300">
@@ -323,6 +321,8 @@ export function Dashboard({ onPageChange }: DashboardProps) {
           )}
         </div>
       </div>
+
+      <WalletConnection />
     </div>
   );
 }

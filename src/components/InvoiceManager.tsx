@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Invoice } from '../types';
 import { Plus, Send, Eye, Trash2, FileText, Calendar } from 'lucide-react';
 import { saveInvoices, loadInvoices } from '../utils/storage';
+import { SOL_TOKEN } from '../utils/tokens';
 
 export function InvoiceManager() {
   const { publicKey, sendTransaction } = useWallet();
@@ -41,6 +43,7 @@ export function InvoiceManager() {
       status: 'draft',
       createdAt: new Date(),
       dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
+      token: SOL_TOKEN,
     };
 
     setInvoices(prev => [newInvoice, ...prev]);
@@ -95,13 +98,16 @@ export function InvoiceManager() {
             Create and manage payment invoices
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Create Invoice</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <WalletMultiButton className="!bg-orange-600 hover:!bg-orange-700 !rounded-xl !px-4 !py-2 !text-sm !font-medium !transition-all !duration-200" />
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Create Invoice</span>
+          </button>
+        </div>
       </div>
 
       {showCreateForm && (
