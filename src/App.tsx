@@ -12,7 +12,7 @@ import { initializeExchangeRates } from './utils/currency';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const { transactions, classifyTransaction } = useTransactions();
+  const { transactions, classifyTransaction, fetchAllTransactions, loading } = useTransactions();
 
   // Initialize exchange rates on app startup
   useEffect(() => {
@@ -43,10 +43,12 @@ function AppContent() {
                 </p>
               </div>
             </div>
-            <TransactionList 
-              transactions={transactions} 
+            <TransactionList
+              transactions={transactions}
               onClassifyTransaction={classifyTransaction}
               showRefreshButton={true}
+              onRefresh={fetchAllTransactions}
+              loading={loading}
             />
           </div>
         );

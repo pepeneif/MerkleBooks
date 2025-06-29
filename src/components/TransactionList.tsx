@@ -12,21 +12,27 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { formatTokenAmount } from '../utils/tokens';
-import { useTransactions } from '../hooks/useTransactions';
 import { loadCategories } from '../utils/storage';
 
 interface TransactionListProps {
   transactions: Transaction[];
   onClassifyTransaction: (id: string, category: string, notes?: string) => void;
   showRefreshButton?: boolean;
+  onRefresh?: () => void;
+  loading?: boolean;
 }
 
-export function TransactionList({ transactions, onClassifyTransaction, showRefreshButton = false }: TransactionListProps) {
+export function TransactionList({
+  transactions,
+  onClassifyTransaction,
+  showRefreshButton = false,
+  onRefresh,
+  loading = false
+}: TransactionListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCategory, setEditCategory] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const { fetchAllTransactions, loading } = useTransactions();
 
   // Load categories on component mount
   useEffect(() => {
@@ -54,7 +60,9 @@ export function TransactionList({ transactions, onClassifyTransaction, showRefre
   };
 
   const handleRefresh = () => {
-    fetchAllTransactions();
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
   if (transactions.length === 0) {
