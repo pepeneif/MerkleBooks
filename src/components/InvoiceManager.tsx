@@ -5,7 +5,7 @@ import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana
 import { Invoice } from '../types';
 import { Plus, Send, Eye, Trash2, FileText, Calendar } from 'lucide-react';
 import { saveInvoices, loadInvoices } from '../utils/storage';
-import { SOL_TOKEN } from '../utils/tokens';
+import { SOL_TOKEN, formatTokenAmount } from '../utils/tokens';
 
 export function InvoiceManager() {
   const { publicKey, sendTransaction } = useWallet();
@@ -229,7 +229,7 @@ export function InvoiceManager() {
                     </div>
                     
                     <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                      {invoice.amount} SOL
+                      {formatTokenAmount(invoice.amount, invoice.token)}
                     </div>
                     
                     <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">

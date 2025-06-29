@@ -459,9 +459,10 @@ export function Dashboard({ onPageChange }: DashboardProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-green-600 dark:text-green-400">Income</p>
-                        <p className="text-xl font-bold text-green-700 dark:text-green-300">
-                          {formatTokenAmountWithCurrency(tokenData.income, tokenData.token, currencyPreference, false)}
-                        </p>
+                        <div
+                          className="text-xl font-bold text-green-700 dark:text-green-300"
+                          dangerouslySetInnerHTML={{ __html: formatTokenAmountWithCurrency(tokenData.income, tokenData.token, currencyPreference, false) }}
+                        />
                       </div>
                       <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
                     </div>
@@ -471,9 +472,10 @@ export function Dashboard({ onPageChange }: DashboardProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-red-600 dark:text-red-400">Expenses</p>
-                        <p className="text-xl font-bold text-red-700 dark:text-red-300">
-                          {formatTokenAmountWithCurrency(tokenData.expenses, tokenData.token, currencyPreference, false)}
-                        </p>
+                        <div
+                          className="text-xl font-bold text-red-700 dark:text-red-300"
+                          dangerouslySetInnerHTML={{ __html: formatTokenAmountWithCurrency(tokenData.expenses, tokenData.token, currencyPreference, false) }}
+                        />
                       </div>
                       <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
                     </div>
@@ -483,14 +485,14 @@ export function Dashboard({ onPageChange }: DashboardProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Net</p>
-                        <p className={`text-xl font-bold ${
-                          tokenData.income - tokenData.expenses >= 0 
-                            ? 'text-green-700 dark:text-green-300' 
-                            : 'text-red-700 dark:text-red-300'
-                        }`}>
-                          {tokenData.income - tokenData.expenses >= 0 ? '+' : ''}
-                          {formatTokenAmountWithCurrency(tokenData.income - tokenData.expenses, tokenData.token, currencyPreference, false)}
-                        </p>
+                        <div
+                          className={`text-xl font-bold ${
+                            tokenData.income - tokenData.expenses >= 0
+                              ? 'text-green-700 dark:text-green-300'
+                              : 'text-red-700 dark:text-red-300'
+                          }`}
+                          dangerouslySetInnerHTML={{ __html: `${tokenData.income - tokenData.expenses >= 0 ? '+' : ''}${formatTokenAmountWithCurrency(tokenData.income - tokenData.expenses, tokenData.token, currencyPreference, false)}` }}
+                        />
                       </div>
                       <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>

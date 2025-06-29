@@ -11,8 +11,8 @@ import {
   Wallet,
   RefreshCw
 } from 'lucide-react';
-import { formatTokenAmount } from '../utils/tokens';
-import { loadCategories } from '../utils/storage';
+import { formatTokenAmount, getTokenDecimalPlaces } from '../utils/tokens';
+import { loadCategories, loadDustThreshold } from '../utils/storage';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -33,6 +33,7 @@ export function TransactionList({
   const [editCategory, setEditCategory] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [showDust, setShowDust] = useState<boolean>(true);
 
   // Load categories on component mount
   useEffect(() => {
@@ -65,7 +66,30 @@ export function TransactionList({
     }
   };
 
-  if (transactions.length === 0) {
+  useEffect(() => {
+    if (!showDust) {
+      transactions.forEach(transaction => {
+        const dustThresholdStable = loadDustThreshold('stable');
+        const dustThresholdOther = loadDustThreshold('other');
+        const isStable = transaction.token.symbol === 'USDC' || transaction.token.symbol === 'USDT';
+        const threshold = isStable ? dustThresholdStable : dustThresholdOther;
+        if (transaction.amount < threshold) {
+          onClassifyTransaction(transaction.id, 'Dust transaction');
+        }
+      });
+    }
+  }, [showDust, transactions, onClassifyTransaction]);
+
+  const filteredTransactions = transactions.filter(transaction => {
+    if (showDust) return true;
+    const dustThresholdStable = loadDustThreshold('stable');
+    const dustThresholdOther = loadDustThreshold('other');
+    const isStable = transaction.token.symbol === 'USDC' || transaction.token.symbol === 'USDT';
+    const threshold = isStable ? dustThresholdStable : dustThresholdOther;
+    return transaction.amount >= threshold;
+  });
+
+  if (filteredTransactions.length === 0) {
     return (
       <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300">
         {showRefreshButton && (
@@ -124,21 +148,40 @@ export function TransactionList({
               {transactions.length} transactions found across all configured wallets
             </p>
           </div>
-          {showRefreshButton && (
-            <button
-              onClick={handleRefresh}
-              disabled={loading}
-              className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
-            >
-              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
-            </button>
-          )}
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Show Dust</span>
+              <button
+                onClick={() => setShowDust(!showDust)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                  showDust
+                    ? 'bg-orange-600'
+                    : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                    showDust ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            {showRefreshButton && (
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="divide-y divide-gray-200/50 dark:divide-gray-700/50">
-        {transactions.map((transaction) => (
+        {filteredTransactions.map((transaction) => (
           <div key={transaction.id} className="p-6 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-all duration-200">
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-4">

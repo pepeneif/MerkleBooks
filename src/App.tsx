@@ -9,19 +9,36 @@ import { Settings } from './components/Settings';
 import { Categories } from './components/Categories';
 import { useTransactions } from './hooks/useTransactions';
 import { initializeExchangeRates } from './utils/currency';
+import {
+  ErrorBoundary,
+  CurrencyErrorBoundary,
+  TransactionErrorBoundary,
+  SettingsErrorBoundary
+} from './components/ErrorBoundary';
+import { logError, logInfo } from './utils/secure-logger';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const { transactions, classifyTransaction, fetchAllTransactions, loading } = useTransactions();
 
-  // Initialize exchange rates on app startup
+  // Initialize exchange rates on app startup with secure logging
   useEffect(() => {
     const initRates = async () => {
+      const startTime = performance.now();
       try {
         await initializeExchangeRates();
-        console.log('Exchange rates initialized from Jupiter API');
+        const duration = performance.now() - startTime;
+        logInfo('Exchange rates initialized successfully', { duration: `${duration.toFixed(2)}ms` }, {
+          component: 'App',
+          function: 'initRates'
+        });
       } catch (error) {
-        console.warn('Failed to initialize exchange rates on startup:', error);
+        const duration = performance.now() - startTime;
+        logError('Failed to initialize exchange rates on startup', error, {
+          component: 'App',
+          function: 'initRates',
+          duration: `${duration.toFixed(2)}ms`
+        });
       }
     };
     
@@ -31,35 +48,63 @@ function AppContent() {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <Dashboard onPageChange={setCurrentPage} />;
+        return (
+          <CurrencyErrorBoundary>
+            <Dashboard onPageChange={setCurrentPage} />
+          </CurrencyErrorBoundary>
+        );
       case 'transactions':
         return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Transactions</h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">
-                  View and classify all transactions from your monitored wallets
-                </p>
+          <TransactionErrorBoundary onRefresh={fetchAllTransactions}>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Transactions</h1>
+                  <p className="text-gray-500 dark:text-gray-400 mt-1">
+                    View and classify all transactions from your monitored wallets
+                  </p>
+                </div>
               </div>
+              <TransactionList
+                transactions={transactions}
+                onClassifyTransaction={classifyTransaction}
+                showRefreshButton={true}
+                onRefresh={fetchAllTransactions}
+                loading={loading}
+              />
             </div>
-            <TransactionList
-              transactions={transactions}
-              onClassifyTransaction={classifyTransaction}
-              showRefreshButton={true}
-              onRefresh={fetchAllTransactions}
-              loading={loading}
-            />
-          </div>
+          </TransactionErrorBoundary>
         );
       case 'invoices':
-        return <InvoiceManager />;
+        return (
+          <ErrorBoundary
+            fallbackTitle="Invoice Manager Error"
+            fallbackMessage="Unable to load invoice management. Please refresh to try again."
+          >
+            <InvoiceManager />
+          </ErrorBoundary>
+        );
       case 'settings':
-        return <Settings />;
+        return (
+          <SettingsErrorBoundary>
+            <Settings />
+          </SettingsErrorBoundary>
+        );
       case 'categories':
-        return <Categories />;
+        return (
+          <ErrorBoundary
+            fallbackTitle="Categories Error"
+            fallbackMessage="Unable to load category management. Please refresh to try again."
+          >
+            <Categories />
+          </ErrorBoundary>
+        );
       default:
-        return <Dashboard onPageChange={setCurrentPage} />;
+        return (
+          <CurrencyErrorBoundary>
+            <Dashboard onPageChange={setCurrentPage} />
+          </CurrencyErrorBoundary>
+        );
     }
   };
 

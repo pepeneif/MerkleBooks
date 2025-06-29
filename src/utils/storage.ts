@@ -19,6 +19,8 @@ const STORAGE_KEYS = {
   AUTO_REFRESH: 'solbooks_auto_refresh',
   CURRENCY_PREFERENCE: 'solbooks_currency_preference',
   CATEGORIES: 'solbooks_categories',
+  DUST_THRESHOLD_STABLE: 'solbooks_dust_threshold_stable',
+  DUST_THRESHOLD_OTHER: 'solbooks_dust_threshold_other',
 } as const;
 
 // Transaction storage
@@ -249,6 +251,27 @@ export const loadAutoRefreshSetting = (): boolean => {
   } catch (error) {
     console.error('Failed to load auto-refresh setting:', error);
     return false; // Default to false on error
+  }
+};
+
+// Dust threshold storage
+export const saveDustThreshold = (threshold: number, type: 'stable' | 'other') => {
+  try {
+    const key = type === 'stable' ? STORAGE_KEYS.DUST_THRESHOLD_STABLE : STORAGE_KEYS.DUST_THRESHOLD_OTHER;
+    localStorage.setItem(key, JSON.stringify(threshold));
+  } catch (error) {
+    console.error(`Failed to save dust threshold for ${type}:`, error);
+  }
+};
+
+export const loadDustThreshold = (type: 'stable' | 'other'): number => {
+  try {
+    const key = type === 'stable' ? STORAGE_KEYS.DUST_THRESHOLD_STABLE : STORAGE_KEYS.DUST_THRESHOLD_OTHER;
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : (type === 'stable' ? 0.001 : 0.00001);
+  } catch (error) {
+    console.error(`Failed to load dust threshold for ${type}:`, error);
+    return type === 'stable' ? 0.01 : 0.001;
   }
 };
 

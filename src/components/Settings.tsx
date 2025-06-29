@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { WalletConfig, RPCConfig, CurrencyPreference } from '../types';
 import { Settings as SettingsIcon, Plus, Trash2, Eye, EyeOff, Download, Upload, AlertTriangle, RefreshCw, Server, Globe, Zap, DollarSign } from 'lucide-react';
-import { saveWalletConfigs, loadWalletConfigs, exportData, importData, clearAllData, saveRPCConfig, loadRPCConfig, saveAutoRefreshSetting, loadAutoRefreshSetting, saveCurrencyPreference, loadCurrencyPreference } from '../utils/storage';
+import { saveWalletConfigs, loadWalletConfigs, exportData, importData, clearAllData, saveRPCConfig, loadRPCConfig, saveAutoRefreshSetting, loadAutoRefreshSetting, saveCurrencyPreference, loadCurrencyPreference, saveDustThreshold, loadDustThreshold } from '../utils/storage';
 import { useTransactions } from '../hooks/useTransactions';
 import { PublicKey } from '@solana/web3.js';
+import { validateDustThreshold, validateWalletName, sanitizeInput, SECURITY_CONFIG } from '../utils/security-config';
 
 const PRESET_RPCS = [
   {
@@ -56,8 +57,17 @@ export function Settings() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(() => loadAutoRefreshSetting());
   const [currencyPreference, setCurrencyPreference] = useState<CurrencyPreference>(() => loadCurrencyPreference());
+  const [dustThresholdStable, setDustThresholdStable] = useState<number>(() => loadDustThreshold('stable'));
+  const [dustThresholdOther, setDustThresholdOther] = useState<number>(() => loadDustThreshold('other'));
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { fetchAllTransactions, loading } = useTransactions();
+  
+  // Enhanced validation states
+  const [walletValidationError, setWalletValidationError] = useState('');
+  const [dustThresholdErrors, setDustThresholdErrors] = useState({
+    stable: '',
+    other: ''
+  });
 
   // Load wallet configs from localStorage on mount - only once
   useEffect(() => {
@@ -85,27 +95,50 @@ export function Settings() {
   }, [wallets, isInitialized]);
 
   const addWallet = () => {
-    if (!newWallet.address || !newWallet.name) return;
+    setWalletValidationError('');
+    
+    if (!newWallet.address || !newWallet.name) {
+      setWalletValidationError('Both wallet name and address are required');
+      return;
+    }
+
+    // Validate wallet name using security config
+    if (!validateWalletName(newWallet.name)) {
+      setWalletValidationError(
+        `Wallet name must be between ${SECURITY_CONFIG.INPUT_VALIDATION.WALLET_NAME_MIN_LENGTH} and ${SECURITY_CONFIG.INPUT_VALIDATION.WALLET_NAME_MAX_LENGTH} characters`
+      );
+      return;
+    }
+
+    // Sanitize wallet name input
+    const sanitizedName = sanitizeInput(newWallet.name);
+    const sanitizedAddress = newWallet.address.trim();
 
     // Validate Solana address format
     try {
-      new PublicKey(newWallet.address);
+      new PublicKey(sanitizedAddress);
     } catch (error) {
-      alert('Invalid Solana wallet address. Please check the address and try again.');
+      setWalletValidationError('Invalid Solana wallet address format. Please check the address and try again.');
       return;
     }
 
     // Check for duplicate addresses
-    const isDuplicate = wallets.some(w => w.address === newWallet.address);
+    const isDuplicate = wallets.some(w => w.address === sanitizedAddress);
     if (isDuplicate) {
-      alert('This wallet address is already being monitored.');
+      setWalletValidationError('This wallet address is already being monitored.');
+      return;
+    }
+
+    // Check wallet limit to prevent resource exhaustion
+    if (wallets.length >= 20) {
+      setWalletValidationError('Maximum number of monitored wallets reached (20). Please remove some wallets first.');
       return;
     }
 
     const wallet: WalletConfig = {
       id: Date.now().toString(),
-      address: newWallet.address,
-      name: newWallet.name,
+      address: sanitizedAddress,
+      name: sanitizedName,
       isActive: true,
       balance: 0,
     };
@@ -113,6 +146,7 @@ export function Settings() {
     setWallets(prev => [...prev, wallet]);
     setNewWallet({ address: '', name: '' });
     setShowAddForm(false);
+    setWalletValidationError('');
     
     // Trigger transaction refresh after a delay
     setTimeout(() => {
@@ -280,6 +314,47 @@ export function Settings() {
     };
     setCurrencyPreference(newPreference);
     saveCurrencyPreference(newPreference);
+  };
+
+  // Enhanced dust threshold handlers with validation
+  const handleDustThresholdChange = (value: string, type: 'stable' | 'other') => {
+    const numValue = parseFloat(value);
+    
+    // Clear previous error
+    setDustThresholdErrors(prev => ({ ...prev, [type]: '' }));
+    
+    // Validate the dust threshold value
+    if (isNaN(numValue)) {
+      setDustThresholdErrors(prev => ({
+        ...prev,
+        [type]: 'Please enter a valid number'
+      }));
+      return;
+    }
+    
+    if (!validateDustThreshold(numValue)) {
+      setDustThresholdErrors(prev => ({
+        ...prev,
+        [type]: `Value must be between ${SECURITY_CONFIG.INPUT_VALIDATION.DUST_THRESHOLD_MIN} and ${SECURITY_CONFIG.INPUT_VALIDATION.DUST_THRESHOLD_MAX}`
+      }));
+      return;
+    }
+    
+    // Update state and save if validation passes
+    if (type === 'stable') {
+      setDustThresholdStable(numValue);
+    } else {
+      setDustThresholdOther(numValue);
+    }
+    
+    try {
+      saveDustThreshold(numValue, type);
+    } catch (error) {
+      setDustThresholdErrors(prev => ({
+        ...prev,
+        [type]: 'Failed to save dust threshold setting'
+      }));
+    }
   };
 
   // Don't render until initialized to prevent hydration issues
@@ -469,6 +544,56 @@ export function Settings() {
                 </div>
               </div>
             </div>
+
+            {/* Dust Threshold Settings */}
+            <div className="mt-4">
+              <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3">Dust Transaction Thresholds</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Set minimum transaction amounts to filter out dust transactions. Valid range: {SECURITY_CONFIG.INPUT_VALIDATION.DUST_THRESHOLD_MIN} - {SECURITY_CONFIG.INPUT_VALIDATION.DUST_THRESHOLD_MAX}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Stablecoins (USDC, USDT)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    min={SECURITY_CONFIG.INPUT_VALIDATION.DUST_THRESHOLD_MIN}
+                    max={SECURITY_CONFIG.INPUT_VALIDATION.DUST_THRESHOLD_MAX}
+                    value={dustThresholdStable}
+                    onChange={(e) => handleDustThresholdChange(e.target.value, 'stable')}
+                    className={`w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 ${
+                      dustThresholdErrors.stable ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                    placeholder="e.g., 0.01"
+                  />
+                  {dustThresholdErrors.stable && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{dustThresholdErrors.stable}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Other Tokens (SOL, etc.)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    min={SECURITY_CONFIG.INPUT_VALIDATION.DUST_THRESHOLD_MIN}
+                    max={SECURITY_CONFIG.INPUT_VALIDATION.DUST_THRESHOLD_MAX}
+                    value={dustThresholdOther}
+                    onChange={(e) => handleDustThresholdChange(e.target.value, 'other')}
+                    className={`w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 ${
+                      dustThresholdErrors.other ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                    placeholder="e.g., 0.001"
+                  />
+                  {dustThresholdErrors.other && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{dustThresholdErrors.other}</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -505,9 +630,15 @@ export function Settings() {
                 <input
                   type="text"
                   value={newWallet.name}
-                  onChange={(e) => setNewWallet(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
+                  onChange={(e) => {
+                    setNewWallet(prev => ({ ...prev, name: e.target.value }));
+                    setWalletValidationError(''); // Clear error on input change
+                  }}
+                  className={`w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 ${
+                    walletValidationError ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   placeholder="My Trading Wallet"
+                  maxLength={SECURITY_CONFIG.INPUT_VALIDATION.WALLET_NAME_MAX_LENGTH}
                 />
               </div>
               <div className="md:col-span-2">
@@ -517,21 +648,42 @@ export function Settings() {
                 <input
                   type="text"
                   value={newWallet.address}
-                  onChange={(e) => setNewWallet(prev => ({ ...prev, address: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
+                  onChange={(e) => {
+                    setNewWallet(prev => ({ ...prev, address: e.target.value }));
+                    setWalletValidationError(''); // Clear error on input change
+                  }}
+                  className={`w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 ${
+                    walletValidationError ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   placeholder="Solana wallet address"
                 />
               </div>
             </div>
+            
+            {/* Validation Error Display */}
+            {walletValidationError && (
+              <div className="mt-3 p-3 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                  <p className="text-sm text-red-700 dark:text-red-400">{walletValidationError}</p>
+                </div>
+              </div>
+            )}
+            
             <div className="flex space-x-3 mt-4">
               <button
                 onClick={addWallet}
-                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-all duration-200"
+                disabled={!newWallet.name || !newWallet.address}
+                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200"
               >
                 Add Wallet
               </button>
               <button
-                onClick={() => setShowAddForm(false)}
+                onClick={() => {
+                  setShowAddForm(false);
+                  setWalletValidationError('');
+                  setNewWallet({ address: '', name: '' });
+                }}
                 className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-xl transition-all duration-200"
               >
                 Cancel

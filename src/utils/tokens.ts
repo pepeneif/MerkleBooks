@@ -74,6 +74,15 @@ export const getTokenByMint = (mint: string): TokenInfo | undefined => {
   return COMMON_TOKENS.find(token => token.mint === mint);
 };
 
-export const formatTokenAmount = (amount: number, token: TokenInfo): string => {
-  return `${amount.toFixed(Math.min(token.decimals, 6))} ${token.symbol}`;
+/**
+ * Get the appropriate number of decimal places for a token
+ * USDC/USDT: 2 decimals, all others: 6 decimals
+ */
+export const getTokenDecimalPlaces = (tokenSymbol: string): number => {
+  return (tokenSymbol === 'USDC' || tokenSymbol === 'USDT') ? 2 : 6;
+};
+
+export const formatTokenAmount = (amount: number, token: TokenInfo, decimals?: number): string => {
+  const decimalPlaces = decimals !== undefined ? decimals : getTokenDecimalPlaces(token.symbol);
+  return `${amount.toFixed(decimalPlaces)} ${token.symbol}`;
 };
