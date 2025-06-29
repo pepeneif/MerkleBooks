@@ -1,4 +1,4 @@
-# MerkleBooks 🚀
+# Merkle.Space 🚀
 
 **Professional Solana Accounting Software**
 
@@ -45,12 +45,15 @@ A beautiful, production-ready accounting application built specifically for Sola
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18 + TypeScript
-- **Styling**: Tailwind CSS
-- **Blockchain**: Solana Web3.js
-- **Wallet**: Solana Wallet Adapter
+- **Styling**: Tailwind CSS with Apple-inspired design
+- **Blockchain**: Solana Web3.js with rate limiting
+- **Wallet**: Solana Wallet Adapter (multi-wallet support)
+- **External APIs**: Jupiter Price API for real-time exchange rates
+- **Security**: Centralized security configuration and secure logging
+- **Error Handling**: Comprehensive error boundary system
 - **Icons**: Lucide React
 - **Build Tool**: Vite
-- **State Management**: React Hooks
+- **State Management**: React Hooks with localStorage persistence
 
 ## 🚀 Quick Start
 
@@ -63,8 +66,8 @@ A beautiful, production-ready accounting application built specifically for Sola
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/pepeneif/MerkleBooks.git
-   cd MerkleBooks
+   git clone <your-repository-url>
+   cd SolBooks
    ```
 
 2. **Install dependencies**
@@ -134,14 +137,19 @@ Toggle between themes using the theme switcher in the sidebar.
 
 ## 🔒 Security & Privacy
 
+- **Enterprise-Grade Security**: Centralized security configuration with input validation
+- **Secure Logging**: Automatic sanitization of sensitive data in logs and errors
 - **Local Storage**: All data is stored locally in your browser
-- **No Server**: No data is sent to external servers
+- **No Server**: No data is sent to external servers (except public APIs for exchange rates)
+- **Error Boundaries**: Comprehensive error handling with graceful recovery
+- **Rate Limiting**: Built-in protection against API abuse and overload
 - **Wallet Security**: Uses official Solana wallet adapters
+- **Data Protection**: Automatic redaction of sensitive information
 - **Open Source**: Full transparency with open source code
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+We welcome contributions! This is an open-source project built for the Solana community.
 
 ### Development Setup
 
@@ -151,24 +159,37 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
+### Development Guidelines
+
+- Follow the existing security patterns and use the centralized security configuration
+- Add appropriate error boundaries for new components
+- Include secure logging for new features
+- Test with multiple wallets and network conditions
+- Ensure mobile responsiveness
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
-
-- **Documentation**: [Wiki](https://github.com/pepeneif/MerkleBooks/wiki)
-- **Issues**: [GitHub Issues](https://github.com/pepeneif/MerkleBooks/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/pepeneif/MerkleBooks/discussions)
-
 ## 🗺️ Roadmap
 
-- [ ] **Analytics Dashboard** - Advanced charts and insights
-- [ ] **Tax Reporting** - Generate tax reports for crypto transactions
-- [ ] **Multi-Chain Support** - Support for Ethereum and other blockchains
+### Near Term
+- [ ] **Enhanced Categories** - Custom icons, colors, and subcategories
+- [ ] **Advanced Analytics** - Portfolio performance charts and insights
+- [ ] **CSV/PDF Export** - Additional export formats for accounting
+- [ ] **Performance Dashboard** - API monitoring and system metrics
+
+### Medium Term
+- [ ] **Multi-Chain Support** - Ethereum and other blockchain integration
+- [ ] **Advanced Filtering** - Granular transaction search and filtering
+- [ ] **Historical Price Data** - Price history and trend analysis
+- [ ] **Tax Reporting** - Generate tax-compliant reports
+
+### Long Term
 - [ ] **Mobile App** - Native iOS and Android applications
-- [ ] **API Integration** - Connect with popular accounting software
 - [ ] **Team Features** - Multi-user support and permissions
+- [ ] **API Integration** - Connect with popular accounting software
+- [ ] **Real-time Notifications** - Price alerts and transaction monitoring
 
 ## 🙏 Acknowledgments
 
@@ -181,4 +202,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for the Solana ecosystem**
 
-[Website](https://solbooks.app) • [Twitter](https://x.com/pepeneif) • [Discord](https://discord.gg/solbooks)
+*SolBooks (Merkle.Space) - Professional cryptocurrency accounting made simple*

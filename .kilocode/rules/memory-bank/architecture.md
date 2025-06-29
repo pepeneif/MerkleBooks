@@ -13,6 +13,7 @@ src/
 ├── components/                 # React components
 │   ├── Categories.tsx          # Category management interface
 │   ├── Dashboard.tsx           # Main dashboard with stats and overview
+│   ├── ErrorBoundary.tsx       # Comprehensive error handling system
 │   ├── InvoiceManager.tsx      # Invoice creation and payment management
 │   ├── Settings.tsx            # Application settings and configuration
 │   ├── Sidebar.tsx             # Navigation sidebar with branding
@@ -29,6 +30,9 @@ src/
 ├── types/                      # TypeScript type definitions
 │   └── index.ts                # Core data models and interfaces
 └── utils/                      # Utility functions
+    ├── currency.ts             # Jupiter API integration and exchange rates
+    ├── secure-logger.ts        # Security-aware logging system
+    ├── security-config.ts      # Centralized security configuration
     ├── storage.ts              # localStorage abstraction layer
     └── tokens.ts               # Token definitions and formatting
 ```
@@ -55,6 +59,21 @@ src/
 - **Rationale**: Standard industry solution, supports multiple wallet types
 - **Implementation**: [`WalletContext.tsx`](../../../src/contexts/WalletContext.tsx) provides connection
 
+### 5. Security-First Architecture
+- **Decision**: Comprehensive security layer with centralized configuration
+- **Rationale**: Protect against common vulnerabilities, sanitize sensitive data
+- **Implementation**: [`security-config.ts`](../../../src/utils/security-config.ts) and [`secure-logger.ts`](../../../src/utils/secure-logger.ts)
+
+### 6. Error Boundary Strategy
+- **Decision**: Specialized error boundaries for different application areas
+- **Rationale**: Graceful degradation, better user experience, secure error handling
+- **Implementation**: [`ErrorBoundary.tsx`](../../../src/components/ErrorBoundary.tsx) with multiple boundary types
+
+### 7. External API Integration
+- **Decision**: Jupiter API for real-time exchange rates with robust fallbacks
+- **Rationale**: Live pricing data essential for accounting, fallbacks ensure reliability
+- **Implementation**: [`currency.ts`](../../../src/utils/currency.ts) with caching and retry logic
+
 ## Design Patterns in Use
 
 ### 1. Context Provider Pattern
@@ -72,6 +91,21 @@ src/
 ### 4. Component Composition Pattern
 - **Page Structure**: [`App.tsx`](../../../src/App.tsx) composes Sidebar + dynamic content
 - **Reusable Components**: TransactionList used in Dashboard and Transactions pages
+
+### 5. Error Boundary Pattern
+- **Specialized Boundaries**: [`ErrorBoundary.tsx`](../../../src/components/ErrorBoundary.tsx) - Currency, Transaction, Settings boundaries
+- **Recovery Mechanisms**: User-friendly error states with retry functionality
+- **Security Considerations**: Sanitized error reporting, no sensitive data exposure
+
+### 6. Security Configuration Pattern
+- **Centralized Security**: [`security-config.ts`](../../../src/utils/security-config.ts) - Single source of truth for security settings
+- **Validation Functions**: Built-in validation for user inputs and API responses
+- **Rate Limiting**: Exponential backoff and request throttling
+
+### 7. Secure Logging Pattern
+- **Structured Logging**: [`secure-logger.ts`](../../../src/utils/secure-logger.ts) - Context-aware logging with security filtering
+- **Data Sanitization**: Automatic redaction of sensitive fields
+- **Performance Monitoring**: Built-in performance tracking and API monitoring
 
 ## Component Relationships
 
@@ -91,9 +125,15 @@ App.tsx
 
 ### Data Flow Architecture
 ```
-Solana RPC ←→ Custom Hooks ←→ Components
+Jupiter API ←→ currency.ts ←→ Exchange Rate Cache
                      ↓
-                localStorage (via storage.ts)
+Solana RPC ←→ Custom Hooks ←→ Components
+                     ↓              ↓
+                localStorage ←→ Security Layer
+                (via storage.ts)  (security-config.ts)
+                     ↓
+                Secure Logger ←→ Error Boundaries
+                (secure-logger.ts)  (ErrorBoundary.tsx)
 ```
 
 ## Critical Implementation Paths
@@ -126,7 +166,35 @@ Solana RPC ←→ Custom Hooks ←→ Components
 - `saveWalletConfigs()` / `loadWalletConfigs()` - Wallet monitoring
 - `exportData()` / `importData()` - Backup/restore functionality
 
-### 4. Theme and UI System
+### 4. Currency and Exchange Rate System
+**Path**: [`currency.ts`](../../../src/utils/currency.ts) → Jupiter API → Components
+
+**Flow**:
+1. `getExchangeRates()` fetches live rates from Jupiter API
+2. Implements caching with TTL and fallback mechanisms
+3. `convertTokenToBaseCurrency()` handles USD/SOL conversions
+4. Rate limiting and retry logic with exponential backoff
+5. Components receive formatted currency data
+
+### 5. Security and Logging System
+**Path**: [`security-config.ts`](../../../src/utils/security-config.ts) → [`secure-logger.ts`](../../../src/utils/secure-logger.ts) → All components
+
+**Flow**:
+1. Centralized security configuration provides limits and validation
+2. Secure logger sanitizes sensitive data before logging
+3. Input validation functions prevent common vulnerabilities
+4. Performance and API monitoring throughout application
+
+### 6. Error Handling System
+**Path**: [`ErrorBoundary.tsx`](../../../src/components/ErrorBoundary.tsx) → [`App.tsx`](../../../src/App.tsx) → Components
+
+**Flow**:
+1. Specialized error boundaries wrap different application areas
+2. Secure error logging with sanitization
+3. User-friendly error states with recovery actions
+4. Development vs production error display modes
+
+### 7. Theme and UI System
 **Path**: [`ThemeContext.tsx`](../../../src/contexts/ThemeContext.tsx) → All components
 
 **Implementation**:
@@ -140,16 +208,28 @@ Solana RPC ←→ Custom Hooks ←→ Components
 - Debounced transaction fetching (5-second delays)
 - Batch processing of blockchain requests
 - Request delays between wallet iterations
+- Jupiter API rate limiting with exponential backoff
+- Configurable timeout and retry mechanisms
 
 ### 2. Memory Management
 - Transaction limits per fetch operation
 - Efficient data merging for duplicate prevention
 - Lazy loading of token metadata
+- Exchange rate caching with size limits and TTL
+- Automatic cache cleanup when size limits exceeded
 
 ### 3. User Experience
 - Loading states during blockchain operations
 - Graceful error handling for RPC failures
 - Responsive design for mobile compatibility
+- Error boundaries prevent application crashes
+- Fallback mechanisms for external API failures
+
+### 4. Security Performance
+- Input validation to prevent processing malicious data
+- Sanitized logging to prevent sensitive data exposure
+- Request validation to prevent API abuse
+- Memory-efficient error handling and logging
 
 ## Integration Points
 
@@ -163,7 +243,15 @@ Solana RPC ←→ Custom Hooks ←→ Components
 - **Auto-connect**: Configurable connection behavior
 - **Multi-wallet**: Support for monitoring multiple addresses
 
-### 3. Browser APIs
+### 3. Jupiter Price API
+- **Exchange Rates**: Real-time cryptocurrency pricing data
+- **Fallback Rates**: Static fallback rates when API unavailable
+- **Caching Strategy**: TTL-based caching with automatic refresh
+- **Rate Limiting**: Request throttling and retry mechanisms
+- **Data Validation**: Response structure and price validation
+
+### 4. Browser APIs
 - **localStorage**: Primary data persistence
 - **Clipboard**: Address copying functionality
 - **File System**: Export/import operations
+- **AbortController**: Request timeout handling

@@ -27,6 +27,17 @@
 - **Recharts 2.12.7**: Chart library for data visualization
 - **Custom Components**: Built from scratch using Tailwind
 
+### External API Integration
+- **Jupiter Price API**: Real-time cryptocurrency exchange rates
+- **Fetch API**: HTTP client for external API communication
+- **AbortController**: Request timeout and cancellation handling
+
+### Security & Logging
+- **Security Configuration**: Centralized security constants and validation
+- **Secure Logging**: Sanitized logging system with sensitive data protection
+- **Input Validation**: Built-in validation functions for user inputs
+- **Rate Limiting**: Exponential backoff and request throttling
+
 ### Development Tools
 - **ESLint 9.9.1**: Code linting and formatting
 - **TypeScript ESLint 8.3.0**: TypeScript-specific linting rules
@@ -81,19 +92,23 @@ npm run lint
 - **Modern Browsers**: ES6+ support required
 - **LocalStorage**: Must support localStorage for data persistence
 - **WebCrypto**: Required for wallet cryptographic operations
-- **Fetch API**: For RPC communication with Solana blockchain
+- **Fetch API**: For RPC communication with Solana blockchain and external APIs
+- **AbortController**: Required for request timeout handling
 
 ### Blockchain Limitations
 - **RPC Rate Limits**: Public endpoints have request limits
 - **Transaction Fees**: Users pay SOL for transaction gas
 - **Network Latency**: Blockchain operations have inherent delays
 - **Token Metadata**: Some tokens may lack complete metadata
+- **External API Limits**: Jupiter API has rate limits and availability constraints
 
 ### Performance Considerations
 - **Client-Side Only**: No server-side rendering or API
 - **Memory Usage**: Large transaction histories consume browser memory
 - **Storage Limits**: localStorage has ~5-10MB browser limits
 - **Concurrent Requests**: Rate limiting prevents parallel blockchain calls
+- **API Rate Limits**: External APIs have request limits and retry requirements
+- **Security Overhead**: Input validation and logging add processing time
 
 ## Key Dependencies Analysis
 
@@ -133,10 +148,12 @@ npm run lint
 - **Migration Strategy**: Version field in exported data for future compatibility
 
 ### API Communication
-- **Fetch API**: Direct RPC calls to Solana blockchain
+- **Fetch API**: Direct RPC calls to Solana blockchain and Jupiter API
 - **No GraphQL**: Direct JSON-RPC communication
 - **Error Handling**: Try-catch blocks with user-friendly messages
-- **Retry Logic**: Built-in retry for failed blockchain requests
+- **Retry Logic**: Built-in retry for failed blockchain and external API requests
+- **Request Validation**: Input sanitization and response validation
+- **Security Headers**: Proper headers for external API requests
 
 ### Code Organization
 - **Feature-Based**: Components grouped by functionality
@@ -163,12 +180,16 @@ npm run lint
 - **Debouncing**: Prevents excessive API calls
 - **Batch Processing**: Groups blockchain requests
 - **Lazy Loading**: Components and data loaded on demand
+- **Caching**: Exchange rate caching with TTL and size limits
+- **Request Deduplication**: Prevents duplicate API requests
 
 ### User Experience
 - **Loading States**: Visual feedback during async operations
 - **Progressive Enhancement**: Works without JavaScript for basic viewing
 - **Responsive Design**: Optimized for all screen sizes
 - **Accessibility**: Semantic HTML and keyboard navigation support
+- **Error Boundaries**: Graceful error handling with recovery options
+- **Fallback Mechanisms**: Offline functionality when APIs unavailable
 
 ## Integration Patterns
 
@@ -183,6 +204,21 @@ npm run lint
 - **Network Support**: Devnet, Testnet, Mainnet-beta, Custom
 - **Transaction Parsing**: Both SOL and SPL token support
 - **Metadata Fetching**: Token logos and information retrieval
+
+### External API Integration
+- **Jupiter API**: Real-time cryptocurrency pricing with fallbacks
+- **Caching Strategy**: TTL-based caching with automatic refresh
+- **Rate Limiting**: Request throttling and exponential backoff
+- **Error Recovery**: Graceful fallback to static rates when API unavailable
+- **Data Validation**: Response structure and price validation
+- **Performance Monitoring**: API response time tracking
+
+### Security Integration
+- **Centralized Configuration**: Single source of truth for security settings
+- **Input Sanitization**: Automatic sanitization of user inputs and API responses
+- **Sensitive Data Protection**: Automatic redaction in logs and errors
+- **Validation Functions**: Built-in validation for all data types
+- **Error Handling**: Secure error reporting without sensitive data exposure
 
 ### Theme Integration
 - **CSS Variables**: Dynamic theme switching
