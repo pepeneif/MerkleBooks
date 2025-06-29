@@ -179,7 +179,9 @@ export function Dashboard({ onPageChange }: DashboardProps) {
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome to Merkle.Space</h1>
           <p className="text-gray-500 dark:text-gray-400 text-lg max-w-2xl mx-auto">
-            Let's get started by adding your first wallet to monitor. You can add multiple Solana wallet addresses to track all your transactions in one place.
+            Tools to monitor multiple Solana wallets and track transactions in one place.
+            <br />
+            Let's get started by adding your first wallet.
           </p>
         </div>
 
